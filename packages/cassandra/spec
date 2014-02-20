@@ -1,0 +1,6 @@
+--- 
+name: cassandra
+dependencies:
+- java7
+files: 
+- cassandra/apache-cassandra-1.2.12-bin.tar.gz

@@ -1,0 +1,83 @@
+---
+<%
+service = "cassandra"
+gateway = eval("properties.#{service}_gateway")
+plan_mgmt = properties.service_plans.send(service.to_sym)
+supported_plans = properties.supported_plans
+if supported_plans
+  plan_mgmt.instance_eval("def fields; @table.keys.select { |v| #{supported_plans}.include? v.to_s }; end;")
+else
+  plan_mgmt.instance_eval("def fields; @table.keys; end;")
+end
+supported_versions = gateway.supported_versions
+version_aliases = gateway.version_aliases
+version_aliases.instance_eval("def fields; @table.keys; end;") if version_aliases
+nats_props_name = properties.nats_props || "nats"
+nats_props = properties.send(nats_props_name)
+nats = "nats://#{nats_props.user}:#{nats_props.password}@#{nats_props.address}:#{nats_props.port}"
+lifecycle = properties.service_lifecycle
+cc_api_version = gateway.cc_api_version || "v1"
+unique_id = "8f4af9f9-0f29-4957-87a3-1039ce983ede"
+%>
+
+cloud_controller_uri: <%= properties.cc.srv_api_uri %>
+mbus: <%= nats %>
+index: <%= spec.index %>
+
+service:
+  name: cassandra
+  unique_id: <%= unique_id %>
+  version: "1.0"
+  description: 'CassandraService'
+  plans:
+  <% for plan in plan_mgmt.fields.each %>
+    <% plan_description = plan_mgmt.send(plan.to_sym).description || "#{plan} plan" %>
+    <% plan_free_flag = plan_mgmt.send(plan.to_sym).free %>
+    <%= "'#{plan}':" %>
+      description: <%= "'#{plan_description}'" %>
+      unique_id: "<%= plan %>-<%= unique_id %>"
+      free: <%= !plan_free_flag.nil? && plan_free_flag.to_s || "true" %>
+  <% end %>
+  default_plan: '<%= gateway.default_plan || 'free' %>'
+
+  tags: ['cassandra', 'cache']
+  timeout: <%= gateway.service_timeout || 10 %>
+  supported_versions: <%= "['#{supported_versions.join("' , '")}']" %>
+<% if version_aliases && !version_aliases.fields.empty? %>
+  version_aliases:
+  <% for version_alias in version_aliases.fields.each %>
+    <%= "'#{version_alias}': '#{version_aliases.send(version_alias.to_sym)}'" %>
+  <% end %>
+<% end %>
+
+<% if gateway.ip_route %>
+ip_route: <%= gateway.ip_route %>
+<% end %>
+
+cc_api_version: <%= cc_api_version %>
+
+<% if cc_api_version == "v2" %>
+gateway_name: "Cassandra (Core) Gateway"
+uaa_client_id: <%= properties.uaa_client_id || "cf" %>
+uaa_endpoint: <%= properties.uaa_endpoint %>
+uaa_client_auth_credentials:
+  username: <%= properties.uaa_client_auth_credentials.username %>
+  password: "<%= properties.uaa_client_auth_credentials.password %>"
+service_auth_tokens:
+  cassandra_core: "<%= gateway.token %>"
+<% end %>
+
+
+
+token: "<%= gateway.token %>"
+logging:
+  file: /var/vcap/sys/log/cassandra_gateway/cassandra_gateway.log
+  level: debug
+  <% if properties.syslog_aggregator %>
+  syslog: vcap.cassandra_gateway
+  <% end %>
+
+pid: /var/vcap/sys/run/cassandra_gateway/cassandra_gateway.pid
+
+
+

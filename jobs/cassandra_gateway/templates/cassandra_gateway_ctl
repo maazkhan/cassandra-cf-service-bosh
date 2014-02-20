@@ -1,0 +1,43 @@
+#!/bin/bash
+
+export PATH=$PATH:/var/vcap/packages/ruby/bin
+
+RUN_DIR=/var/vcap/sys/run/cassandra_gateway
+LOG_DIR=/var/vcap/sys/log/cassandra_gateway
+PIDFILE=$RUN_DIR/cassandra_gateway.pid
+JOB_DIR=/var/vcap/jobs/cassandra_gateway
+
+source /var/vcap/packages/common/utils.sh
+
+case $1 in
+
+  start)
+    pid_guard $PIDFILE "Cassandra gateway"
+
+    mkdir -p $RUN_DIR
+    mkdir -p $LOG_DIR
+
+    echo $$ > $PIDFILE
+
+    <% if properties.syslog_aggregator %>
+    /var/vcap/packages/syslog_aggregator/setup_syslog_forwarder.sh $JOB_DIR/config
+    <% end %>
+
+    exec /var/vcap/packages/cassandra_gateway/services/cassandra/bin/cassandra_gateway \
+         -c $JOB_DIR/config/cassandra_gateway.yml \
+         >>$LOG_DIR/cassandra_gateway.stdout.log \
+         2>>$LOG_DIR/cassandra_gateway.stderr.log
+
+    ;;
+
+  stop)
+    kill_and_wait $PIDFILE
+
+    ;;
+
+  *)
+    cassandra "Usage: cassandra_gateway_ctl {start|stop}"
+
+    ;;
+
+esac

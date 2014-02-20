@@ -1,0 +1,5 @@
+check process cassandra_node
+  with pidfile /var/vcap/sys/run/cassandra_node/cassandra_node.pid
+  start program "/var/vcap/jobs/cassandra_node/bin/monit_debugger cassandra_node_ctl '/var/vcap/jobs/cassandra_node/bin/cassandra_node_ctl start'"
+  stop program "/var/vcap/jobs/cassandra_node/bin/monit_debugger cassandra_node_ctl '/var/vcap/jobs/cassandra_node/bin/cassandra_node_ctl stop'"
+  group vcap

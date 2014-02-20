@@ -1,0 +1,8 @@
+---
+name: cassandra_gateway
+dependencies:
+- sqlite
+- ruby
+files:
+- services/cassandra/**/*
+- pkg_utils/*

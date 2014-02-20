@@ -1,0 +1,5 @@
+check process cassandra_gateway
+  with pidfile /var/vcap/sys/run/cassandra_gateway/cassandra_gateway.pid
+  start program "/var/vcap/jobs/cassandra_gateway/bin/cassandra_gateway_ctl start"
+  stop program "/var/vcap/jobs/cassandra_gateway/bin/cassandra_gateway_ctl stop"
+  group vcap

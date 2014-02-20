@@ -1,0 +1,15 @@
+--- 
+name: cassandra_node
+packages: 
+- cassandra
+- cassandra_node
+- java7
+- common
+- ruby
+- sqlite
+- syslog_aggregator
+templates:
+  monit_debugger: bin/monit_debugger
+  cassandra_node_ctl: bin/cassandra_node_ctl
+  cassandra_node.yml.erb: config/cassandra_node.yml
+  syslog_forwarder.conf.erb: config/syslog_forwarder.conf

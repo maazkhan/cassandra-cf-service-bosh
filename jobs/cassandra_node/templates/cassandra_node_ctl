@@ -1,0 +1,44 @@
+#!/bin/bash
+
+ulimit -n 65536
+export PATH=$PATH:/var/vcap/packages/ruby/bin
+
+RUN_DIR=/var/vcap/sys/run/cassandra_node
+LOG_DIR=/var/vcap/sys/log/cassandra_node
+PIDFILE=$RUN_DIR/cassandra_node.pid
+JOB_DIR=/var/vcap/jobs/cassandra_node
+
+source /var/vcap/packages/common/utils.sh
+
+case $1 in
+
+  start)
+    pid_guard $PIDFILE "Cassandra node"
+
+    mkdir -p $RUN_DIR
+    mkdir -p $LOG_DIR
+
+    echo $$ > $PIDFILE
+
+    <% if properties.syslog_aggregator %>
+    /var/vcap/packages/syslog_aggregator/setup_syslog_forwarder.sh $JOB_DIR/config
+    <% end %>
+
+    exec /var/vcap/packages/cassandra_node/services/cassandra/bin/cassandra_node \
+         -c $JOB_DIR/config/cassandra_node.yml \
+         >>$LOG_DIR/cassandra_node.stdout.log \
+         2>>$LOG_DIR/cassandra_node.stderr.log
+
+    ;;
+
+  stop)
+    kill_and_wait $PIDFILE
+
+    ;;
+
+  *)
+    echo "Usage: cassandra_node_ctl {start|stop}"
+
+    ;;
+
+esac

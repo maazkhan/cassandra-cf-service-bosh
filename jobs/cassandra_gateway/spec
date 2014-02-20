@@ -1,0 +1,14 @@
+---
+name: cassandra_gateway
+
+templates:
+  cassandra_gateway_ctl: bin/cassandra_gateway_ctl
+  cassandra_gateway.yml.erb: config/cassandra_gateway.yml
+  syslog_forwarder.conf.erb: config/syslog_forwarder.conf
+
+packages:
+- common
+- cassandra_gateway
+- ruby
+- sqlite
+- syslog_aggregator
